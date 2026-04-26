@@ -3,129 +3,114 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | slimeclick</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
+    <title>Slime Clicker 2</title>
+    <style>
+      body {
+        padding: 0; margin: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at center, #2e1a4d 0%, #050110 100%);
+        font-family: "Segoe UI", sans-serif;
+        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        min-height: 100vh;
+      }
+      #unity-container {
+        position: relative;
+        width: 960px; height: 600px; /* Стандартный размер, можно менять */
+        border: 4px solid #16d9e3;
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(22, 217, 227, 0.4);
+        background: #000;
+        overflow: hidden;
+      }
+      canvas { width: 100%; height: 100%; display: block; }
+ 
+      /* Загрузка */
+      #unity-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+      #unity-progress-bar-empty {
+        width: 250px; height: 15px; 
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px; border: 2px solid #16d9e3; overflow: hidden;
+      }
+      #unity-progress-bar-full {
+        width: 0%; height: 100%;
+        background: linear-gradient(90deg, #ff00ff, #f3bad6);
+        box-shadow: 0 0 10px #ff00ff;
+      }
+ 
+      /* Футер */
+      #unity-footer {
+        position: absolute; bottom: 0; width: 100%; height: 40px;
+        background: rgba(5, 1, 16, 0.8);
+        border-top: 1px solid #16d9e3;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 15px; box-sizing: border-box;
+      }
+      #unity-build-title { color: #ff9900; font-weight: bold; font-size: 14px; text-shadow: 0 0 5px #ff9900; }
+ 
+      /* Кнопка без картинки (на чистом CSS) */
+      #unity-fullscreen-button {
+        width: 25px; height: 25px;
+        cursor: pointer;
+        border: 2px solid #16d9e3;
+        border-radius: 5px;
+        color: #16d9e3;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; font-size: 18px;
+        transition: 0.2s;
+      }
+      #unity-fullscreen-button:hover { background: #16d9e3; color: #000; transform: scale(1.1); }
+      #unity-fullscreen-button::after { content: '⛶'; } /* Символ полного экрана */
+    </style>
   </head>
   <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+    <div id="unity-container">
+      <canvas id="unity-canvas"></canvas>
       <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
+        <div style="color: #ff00ff; margin-bottom: 10px; text-align: center;">LOADING SLIMES...</div>
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
       </div>
-      <div id="unity-warning"> </div>
       <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
+        <div id="unity-build-title">SLIME CLICKER 2</div>
         <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">slimeclick</div>
       </div>
     </div>
+ 
     <script>
-
       var container = document.querySelector("#unity-container");
       var canvas = document.querySelector("#unity-canvas");
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
-
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
-
+ 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/clicker web.loader.js";
+      var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
       var config = {
-        dataUrl: buildUrl + "/clicker web.data",
-        frameworkUrl: buildUrl + "/clicker web.framework.js",
-        codeUrl: buildUrl + "/clicker web.wasm",
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
         streamingAssetsUrl: "StreamingAssets",
-        companyName: "pump",
-        productName: "slimeclick",
-        productVersion: "1.0",
-        showBanner: unityShowBanner,
+        companyName: "{{{ COMPANY_NAME }}}",
+        productName: "{{{ PRODUCT_NAME }}}",
+        productVersion: "{{{ PRODUCT_VERSION }}}",
       };
-
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        container.className = "unity-mobile";
-        canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
-      }
-
-      loadingBar.style.display = "block";
-
+ 
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
           progressBarFull.style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          fullscreenButton.onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch((message) => {
+          alert(message);
+        });
+      };
       document.body.appendChild(script);
-
     </script>
   </body>
 </html>
